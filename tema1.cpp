@@ -10,7 +10,7 @@ protected:
     int root = 0;
     
 public:
-     Plant()
+     Plant(): age(0), root(0)
     {
         root++;
         cout << "\n Constrcutor executed \n";
