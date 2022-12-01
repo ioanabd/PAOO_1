@@ -110,11 +110,11 @@ public:
 
 class Uncopyable
 {
-protected:           // allow construction
-    Uncopyable() {}  // and destruction of
-    ~Uncopyable() {} // derived objects...
+protected:           
+    Uncopyable() {}
+    ~Uncopyable() {}
 private:
-    Uncopyable(const Uncopyable &); // ...but prevent copying
+    Uncopyable(const Uncopyable &);
     Uncopyable &operator=(const Uncopyable &);
 };
 
@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    Vegetable(const Vegetable &); // declarations only
+    Vegetable(const Vegetable &);
     Vegetable &operator=(const Vegetable &);
 };
 
@@ -173,4 +173,6 @@ int main()
     
     // Vegetable veggy;
     // Vegetable carrot(veggy); error
+
+    return 0;
 }
