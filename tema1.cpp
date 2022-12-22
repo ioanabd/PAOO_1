@@ -1,6 +1,12 @@
 #include <iostream>
 using namespace std;
+#include <mutex>
+#include <thread>
+using namespace std;
+mutex mtx;
 
+//am eliminat clasele in plus pentru simplitatea codului
+//si pentru a evidentia 
 class Plant{
     
 private:
@@ -10,8 +16,10 @@ protected:
     int root = 0;
     
 public:
-     Plant(): age(0), root(0)
+    int lockPlant;
+     Plant(int agePlant): age(0), root(0)
     {
+        this->age=agePlant;
         root++;
         cout << "\n Constrcutor executed \n";
     }
@@ -42,72 +50,24 @@ public:
     {
         return root;
     }
-};
-class Fruit : public Plant
-{
-private:
-    int flowers, leaves;
-    Fruit *pb;
-
-public:
-    Fruit(int f, int l):flowers(f), leaves(l)
-    {
-        flowers = f;
-        leaves = l;
+    void setlockPlant(int lockPlant){
+        this->lockPlant = lockPlant;
     }
-    // copy constructor
-    Fruit(const Fruit &rhs)
-    {
-        flowers = rhs.flowers;
-        leaves = rhs.leaves;
-    }
-    Fruit& operator+=(const Fruit& rhs)
-    { 
-        flowers = flowers + rhs.flowers;
-        leaves = leaves + rhs.leaves;
-        root = root + rhs.root;
-        return *this;
-    }
-    Fruit& operator-=(const Fruit& rhs)
-    { 
-        flowers = flowers - rhs.flowers;
-        leaves = leaves - rhs.leaves;
-        root = root - rhs.root;
-        return *this;
-    }
-    Fruit& operator*=(const Fruit& rhs)
-    { 
-        flowers = flowers * rhs.flowers;
-        leaves = leaves * rhs.leaves;
-        root = root * rhs.root;
-        return *this;
-    }
-    // Fruit& operator=(const Fruit& rhs)
-    // { 
-    //     flowers = rhs.flowers;
-    //     leaves = rhs.leaves;
-    //     root = rhs.root;
-    //     return *this;
-    // }
-    Fruit& operator=(int rhs)
-    { 
-        flowers = rhs;
-        leaves = rhs;
-        root = rhs;
-        return *this;
-    }
-    Fruit& operator=(const Fruit& rhs) 
-    {
-        if (this == &rhs) return *this;
-        flowers = rhs.flowers;
-        leaves = rhs.leaves;
-        root = rhs.root;
-        return *this;
-    }
-    int getFlowers() { return flowers; }
-    int getLeaves() { return leaves; }
 };
 
+Plant *createPlant(const int agePlant){
+    return new Plant(agePlant);
+};
+
+void lock(Plant& plant){
+    plant.setlockPlant(1);
+    cout << "\n locked \n";
+};
+
+void unlock(Plant& plant){
+    plant.setlockPlant(0);
+    cout << "\n unlocked \n";
+};
 class Uncopyable
 {
 protected:           
@@ -117,62 +77,41 @@ private:
     Uncopyable(const Uncopyable &);
     Uncopyable &operator=(const Uncopyable &);
 };
+class Lock: Uncopyable{
+    private:
+       Plant &plant;
 
-class Vegetable : private Uncopyable, public Plant
-{
-public:
-    bool safeToEat;
-    Vegetable(){
-        safeToEat = true;
-    }
-
-private:
-    Vegetable(const Vegetable &);
-    Vegetable &operator=(const Vegetable &);
+    public:
+        Lock(Plant &ptr): plant(ptr){
+            lock(plant);
+        }
+        ~Lock(){ 
+            unlock(plant);
+        }
 };
 
 int main()
 {
-    Plant plant;
-    plant.setAge(2);
-    Plant plant2;
-    plant.setAge(1);
-    cout << endl;
-    cout << "plant age = " << plant.getAge();
-    cout << endl;
-    cout << "plant root = " << plant.getRoot() << endl;
-    plant += (plant2);
-    cout<< "new plant root = " << plant.getRoot() << endl;
-
-
-    Fruit mango(5, 10);
-    Fruit grape = mango;
-    Fruit strawberry(mango);
+    auto_ptr<Plant> plantaNr1(createPlant(10)); //crestem o planta de 10 ani 
+    cout << "\n Age Planta 1: " << plantaNr1->getAge() << endl;;
+    auto_ptr<Plant> plantaNr2(plantaNr1);//copiam in plantaNr2, plantaNr1
+    cout << "\n Age Planta 2: " << plantaNr2->getAge() << endl;;
     
+    shared_ptr<Plant> nufar(createPlant(5));
+    cout << "\n Age nufar: " << nufar->getAge() << endl;
 
-    cout << "mango flowers = " << mango.getFlowers() << endl;
-    cout << "mango leaves = " << mango.getLeaves() << endl;
-    cout << "grape flowers = " << grape.getFlowers() << endl;
-    cout << "grape leaves = " << grape.getLeaves() << endl;
-    cout << "strawberry flowers = " << strawberry.getFlowers() << endl;
-    cout << "strawberry leaves = " << strawberry.getLeaves() << endl;
-    cout << "strawberry root = " << strawberry.getRoot() << endl;
-    mango += (grape);
-    cout << "new mango flowers = " << mango.getFlowers() << endl;
-    mango -= (grape);
-    cout << "new mango flowers = " << mango.getFlowers() << endl;
-    mango *= (grape);
-    cout << "new mango flowers = " << mango.getFlowers() << endl;
-    mango = 2;
-    cout << "new mango flowers = " << mango.getFlowers() << endl;
-    mango = grape;
-    cout << "new mango flowers after grape = " << mango.getFlowers() << endl;
-
-    mango.setAge(20);
-    cout << "mango age = " << mango.getAge() << endl;
+    //copiam folosind shared_ptr
+    shared_ptr<Plant> ambrozie(nufar);
+    cout << "\n Age ambrozie: " << ambrozie->getAge() << endl;
     
-    // Vegetable veggy;
-    // Vegetable carrot(veggy); error
+    unique_ptr<Plant> trandafir(createPlant(20));
+    cout << "\n Root trandafir: " << trandafir->getRoot() << endl;//si destructorul si constructorul sunt apelati
 
+    //unique_ptr<Plant> matraguna(trandafir);//eroare, e pointer unic
+   
+    Plant orhidee(2); 
+    Lock lockedplt(orhidee);//lock cand cream
+    orhidee.getAge();//unlock dupa destructor
+   
     return 0;
 }
